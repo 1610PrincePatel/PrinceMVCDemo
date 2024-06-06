@@ -1,0 +1,60 @@
+﻿@model PrinceMVCDemo.Models.UserDetails
+
+<div id="addEditModal" class="modal fade" tabindex="-1" role="dialog">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Create New User</h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                @using (Html.BeginForm("saveUser", "UserDetails", FormMethod.Post, new { id = "userDetailsForm" }))
+                {
+                    @Html.HiddenFor(m => m.UserID)
+
+                    <div class="form-group">
+                        @Html.LabelFor(m => m.Name)
+                        @Html.TextBoxFor(m => m.Name, new { @class = "form-control" })
+                        @Html.ValidationMessageFor(m => m.Name, "", new { @class = "text-danger" })
+                    </div>
+                    <div class="form-group">
+                    </div>
+                    <div class="form-group">
+                        @Html.LabelFor(m => m.Email)
+                        @Html.TextBoxFor(m => m.Email, new { @class = "form-control", required = "required", pattern = "[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}" })
+                        @Html.ValidationMessageFor(m => m.Email, "", new { @class = "text-danger" })
+                    </div>
+                    <div class="form-group">
+                        @Html.LabelFor(m => m.PhoneNo)
+                        @Html.TextBoxFor(m => m.PhoneNo, new { @class = "form-control" })
+                        @Html.ValidationMessageFor(m => m.PhoneNo, "", new { @class = "text-danger" })
+                    </div>
+                    <div class="form-group">
+                        @Html.LabelFor(m => m.Address)
+                        @Html.TextBoxFor(m => m.Address, new { @class = "form-control" })
+                    </div>
+                    <div class="form-group">
+                        @Html.LabelFor(m => m.StateName)
+                        @Html.DropDownListFor(m => m.StateName, new SelectList(Model.States, "Id", "StateName"), "Select State", new { @class = "form-control", id = "StateName" })
+                        @Html.ValidationMessageFor(m => m.StateName, "", new { @class = "text-danger" })
+                    </div>
+                    <div class="form-group">
+                        @Html.LabelFor(m => m.CityName)
+                        @Html.DropDownListFor(m => m.CityName, new SelectList(Model.Cities, "Id", "CityName"), "Select City", new { @class = "form-control", id = "CityName" })
+                        @Html.ValidationMessageFor(m => m.CityName, "", new { @class = "text-danger" })
+                    </div>
+                    <div class="form-group">
+                        @Html.LabelFor(m => m.Agree)
+                        @Html.CheckBoxFor(m => m.Agree)
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+                        <button type="submit" class="btn btn-primary" id="saveButton">Save changes</button>
+                    </div>
+                }
+            </div>
+        </div>
+    </div>
+</div>

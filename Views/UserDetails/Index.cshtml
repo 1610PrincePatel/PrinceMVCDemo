@@ -1,0 +1,226 @@
+﻿@model IEnumerable<PrinceMVCDemo.Models.UserDetails>
+
+@{
+    ViewBag.Title = "Index";
+}
+
+<h2>Index</h2>
+
+<p>
+    <a href="#" id="createNewUser" class="btn btn-primary">Create New</a>
+</p>
+<table class="table">
+    <tr>
+        <th>
+            @Html.DisplayNameFor(model => model.Name)
+        </th>
+        <th>
+            @Html.DisplayNameFor(model => model.Email)
+        </th>
+        <th>
+            @Html.DisplayNameFor(model => model.PhoneNo)
+        </th>
+        <th></th>
+    </tr>
+
+    @foreach (var item in Model)
+    {
+        <tr>
+            <td>
+                @Html.DisplayFor(modelItem => item.Name)
+            </td>
+            <td>
+                @Html.DisplayFor(modelItem => item.Email)
+            </td>
+            <td>
+                @Html.DisplayFor(modelItem => item.PhoneNo)
+            </td>
+            <td>
+                @Html.ActionLink("Edit", "Edit", new { id = item.UserID }, new { @class = "edit-user", data_id = item.UserID }) |
+                @Html.ActionLink("Delete", "Delete", new { id = item.UserID }, new { @class = "delete-user", data_id = item.UserID })
+            </td>
+        </tr>
+    }
+
+</table>
+@Html.Partial("_UserDetailsPopup", new PrinceMVCDemo.Models.UserDetails { States = ViewBag.States, Cities = ViewBag.Cities })
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/toastr.min.css">
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/toastr.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jquery-validate/1.19.3/jquery.validate.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jquery-validation-unobtrusive/3.2.12/jquery.validate.unobtrusive.min.js"></script>
+
+<script>
+    $(document).ready(function () {
+
+        $('#addEditModal').modal({
+            backdrop: 'static',
+            keyboard: false
+        });
+
+        $('#addEditModal form').submit(function (e) {
+            e.preventDefault();
+            if ($('#userDetailsForm').validate().form()) {
+                var formData = $(this).serialize();
+                var formData = $(this).serialize();
+                var cityId = $('#CityName').val();
+                formData += '&CityId=' + cityId;
+                $.ajax({
+                    type: 'POST',
+                    url: '/UserDetails/addEditUserDetails',
+                    data: formData,
+                    success: function (response) {
+                        if (response.IsValid) {
+                            if (response.UserDetails.UserID > 0) {
+                                toastr.success('User successfully updated');
+                            }
+                            else {
+                                toastr.success('User successfully added');
+                            }
+                            setTimeout(function () {
+                                location.reload();
+                            }, 500); 
+                            $('#addEditModal').modal('hide');
+                            $('#addEditModal').find('form')[0].reset();
+                        } else {
+                            toastr.error('Unable to Save User Details');
+                        }
+                        $('#addEditModal').modal('hide');
+                    }
+                });
+            }
+        });
+
+        $('#createNewUser').click(function (e) {
+            var $cityDropdown = $('#CityName');
+            $cityDropdown.empty();
+            $cityDropdown.append($('<option>', {
+                value: '',
+                text: 'Select City'
+            }));
+            toggleSaveButton();
+            $('.text-danger').text('');
+            var form = $('#userDetailsForm');
+            form.find('.input-validation-error').removeClass('input-validation-error');
+            form.find('.valid').removeClass('valid');
+            form[0].reset();
+            $('#addEditModal').modal('show');
+        });
+
+        $('#addEditModal .btn-secondary, #addEditModal .close').click(function () {
+            $('#addEditModal').modal('hide');
+        });
+
+        $('.edit-user').click(function (e) {
+            e.preventDefault();
+            var userId = $(this).data('id');
+            $('#addEditModal .modal-title').text('Edit User');
+            $.ajax({
+                type: 'GET',
+                url: '/UserDetails/GetById?UserID=' + userId,
+                success: function (response) {
+                    if (response.UserDetails) {
+                        var userDetails = response.UserDetails;
+                        $('#UserID').val(userDetails.UserID);
+                        $('#Name').val(userDetails.Name);
+                        $('#Email').val(userDetails.Email);
+                        $('#PhoneNo').val(userDetails.PhoneNo);
+                        $('#Address').val(userDetails.Address);
+                        $('#StateName').val(userDetails.StateId);
+                        $('#CityName').val(userDetails.CityId);
+                        $('#Agree').prop('checked', userDetails.Agree);
+                        var $cityDropdown = $('#CityName');
+                        $.ajax({
+                            url: '/UserDetails/GetCitiesByStateId',
+                            type: 'GET',
+                            data: { stateId: userDetails.StateId },
+                            success: function (data) {
+                                $cityDropdown.empty();
+                                $cityDropdown.append($('<option>', {
+                                    value: '',
+                                    text: 'Select City'
+                                }));
+                                $.each(data.Cities, function (index, city) {
+                                    $cityDropdown.append($('<option>', {
+                                        value: city.Id,
+                                        text: city.CityName
+                                    }));
+                                });
+                                $('#CityName').val(userDetails.CityId);
+                            }
+                        });
+                        toggleSaveButton();
+                        $('#addEditModal').modal('show');
+                    }
+                },
+            });
+        });
+
+        $('.delete-user').click(function (e) {
+            e.preventDefault();
+            var userId = $(this).data('id');
+            var confirmation = confirm("Are you sure you want to delete this user?");
+            if (confirmation) {
+                $.ajax({
+                    type: 'POST',
+                    url: '/UserDetails/deleteUserDetails',
+                    data: { UserID: userId },
+                    success: function (response) {
+                        if (response.IsValid) {
+                            setTimeout(function () {
+                                location.reload();
+                            }, 500);
+                            toastr.success('User successfully deleted');
+                        } else {
+                            toastr.error('Unable to Delete User Details');
+                        }
+                        $('#addEditModal').modal('hide');
+                    }
+                });
+            }
+        });
+
+        function toggleSaveButton() {
+            var agreeChecked = $('#Agree').prop('checked');
+            if (agreeChecked) {
+                $('#saveButton').prop('disabled', false);
+            } else {
+                $('#saveButton').prop('disabled', true);
+            }
+        }
+        $('#Agree').change(function () {
+            toggleSaveButton();
+        });
+
+        $('#StateName').change(function () {
+            var selectedStateId = $(this).val();
+            var $cityDropdown = $('#CityName');
+            $cityDropdown.empty();
+            if (selectedStateId !== '') {
+                $.ajax({
+                    url: '/UserDetails/GetCitiesByStateId',
+                    type: 'GET',
+                    data: { stateId: selectedStateId },
+                    success: function (data) {
+                        $cityDropdown.append($('<option>', {
+                            value: '',
+                            text: 'Select City'
+                        }));
+                        $.each(data.Cities, function (index, city) {
+                            $cityDropdown.append($('<option>', {
+                                value: city.Id,
+                                text: city.CityName
+                            }));
+                        });
+                    }
+                });
+            } else {
+                $cityDropdown.append($('<option>', {
+                    value: '',
+                    text: 'Select City'
+                }));
+            }
+        });
+    });
+</script>
